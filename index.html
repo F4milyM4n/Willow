@@ -109,6 +109,7 @@ details summary{cursor:pointer;min-height:32px;display:flex;align-items:center}
 .body.sm button{min-height:44px}.body.sm button[aria-pressed=true]{background:var(--field);color:#fff;border-color:var(--field)}
 .tag.pain{background:var(--mid);color:var(--ink)}.tag.pain.hi{background:var(--hot);color:#fff}
 .caution{margin-top:8px;padding:8px 10px;border-radius:10px;background:var(--mid);font-size:14px}.caution.hi{background:#ffd1cc;color:#3a0d0a}
+.card.inst{border:2px solid var(--hot)}
 header{padding-top:calc(18px + env(safe-area-inset-top));padding-left:max(5vw,16px,env(safe-area-inset-left));padding-right:max(5vw,16px,env(safe-area-inset-right))}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -117,7 +118,7 @@ header{padding-top:calc(18px + env(safe-area-inset-top));padding-left:max(5vw,16
 <header><div class="top"><span class="pill" id="sync">On this phone</span><nav class="nav" id="nav"><button data-go="home">Train</button><button data-go="history">History</button><button data-go="settings">Setup</button></nav></div><div class="wrapH" id="head"></div></header>
 <main id="app"></main>
 <div class="bar" id="bar" hidden><div class="in" id="barIn"></div></div>
-<script src="app.js?v=5"></script>
+<script src="app.js?v=6"></script>
 <script>
   if ('serviceWorker' in navigator) {
     // Reload once only for an UPDATE (a worker already controlled this page), never on first install.

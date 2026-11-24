@@ -234,10 +234,22 @@ function bar(btns){const b=$('#bar');if(!btns){b.hidden=true;return}b.hidden=fal
 function render(){const v=V.view;document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.go===v||(b.dataset.go==='home'&&!['history','settings','exEdit'].includes(v))||(b.dataset.go==='settings'&&v==='exEdit'))));
  ({home,feel,pick,lift,condPick,timer,condLog,done,history:histView,settings:setView,exEdit})[v]();window.scrollTo(0,0)}
 
+// ---------- install (installed web-app version only; never inside Claude) ----------
+let installEvt=null;
+const standalone=()=>{try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}};
+const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const canInstall=()=>typeof claude==='undefined'&&!standalone()&&(installEvt||isIOS());
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;if(V.view==='home'||V.view==='settings')render()});
+window.addEventListener('appinstalled',()=>{installEvt=null;if(V.view==='home'||V.view==='settings')render()});
+const SHARE='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-3px"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5v10h14V11h-1"/></svg>';
+function installCard(always){if(!canInstall())return '';let hid=false;try{hid=!always&&localStorage.getItem('willow-install-hide')==='1'}catch(e){}if(hid)return '';
+ if(installEvt)return `<div class="card inst"><div><b>Install Willow</b><div class="small">Adds it to your home screen. Opens full screen and works offline.</div></div><div class="row" style="margin-top:10px"><button class="btn sm" data-act="install">Install</button>${always?'':'<button class="btn ghost sm" data-act="instHide">Not now</button>'}</div></div>`;
+ const safari=/safari/i.test(navigator.userAgent)&&!/crios|fxios|edgios/i.test(navigator.userAgent);
+ return `<div class="card inst"><b>Install Willow</b><ol class="small" style="margin:6px 0 0;padding-left:20px"><li>Tap the Share button ${SHARE} ${safari?'at the bottom of the screen':'— in Chrome it’s in the address bar at the top. If you don’t see Add to Home Screen, open the link in Safari instead'}.</li><li>Scroll down and tap <b>Add to Home Screen</b>, then <b>Add</b>.</li></ol><div class="small" style="margin-top:6px">Install before logging workouts — the home-screen app keeps its own data, separate from Safari.</div>${always?'':'<button class="btn ghost sm" style="margin-top:8px" data-act="instHide">Not now</button>'}</div>`}
 function home(){const last=S.sessions[0];head('What are we training?',last?`Last session: ${esc(last.title)}, ${ago(last.d)}.`:'Pick one. You can change your mind tomorrow.');
  $('#app').innerHTML=`<div class="big">
  <button class="choice t-h" data-type="str"><span class="sw">${ICON.str}</span><span><b>Strength</b><span>Barbell, kettlebells and rings. Weights from last time are filled in.</span></span></button>
- <button class="choice t-t" data-type="cond"><span class="sw">${ICON.cond}</span><span><b>Conditioning</b><span>Rower, heavy bag, battle ropes or kettlebell intervals with a timer.</span></span></button></div>`+bjjCard();bar()}
+ <button class="choice t-t" data-type="cond"><span class="sw">${ICON.cond}</span><span><b>Conditioning</b><span>Rower, heavy bag, battle ropes or kettlebell intervals with a timer.</span></span></button></div>`+bjjCard()+installCard();bar()}
 function feel(){const ed=W&&W.type==='str'&&V.type==='str';head(ed?'Change energy level':'How do you feel?',ed?'Your lifts stay; the weights and reps update to match.':'Be honest — every answer gets a good session.');
  const bj=bjj(),cd=compDays(),notes=[];
  if(!ed&&V.type==='cond'&&bj.rolled)notes.push(`You rolled ${ago(bj.rolled.d)}. Rolling already hit the hard intervals — Steady or Tired is plenty.`);
@@ -385,7 +397,7 @@ function setView(){head('Setup','Match these to your equipment.');const st=S.set
  <div class="small" style="margin-top:6px">2.5 lb means a 1.25 plate per side at most. Use 5 to skip the small plates.</div>
  <label style="display:block;margin-top:10px">Next competition (optional)<input id="sComp" type="date" value="${esc(st.comp||'')}"></label>
  <div class="small" style="margin-top:4px">Two weeks out: one set fewer. The last week: half the sets, same weights.</div>
- <button class="btn sm" style="margin-top:12px" data-act="saveSet">Save setup</button></div>
+ <button class="btn sm" style="margin-top:12px" data-act="saveSet">Save setup</button></div>${installCard(true)}
  <div class="card"><h3>Training maxes</h3><div class="small">Edit if a number looks wrong. Barbell lifts only.</div><table>${EX.filter(e=>e.k==='bb').map(e=>`<tr><td>${e.n}</td><td style="width:110px"><input inputmode="decimal" data-tm="${e.id}" value="${tm(e.id)??''}" placeholder="—" aria-label="${e.n} training max"></td></tr>`).join('')}</table>
  <button class="btn sm" style="margin-top:12px" data-act="saveTm">Save maxes</button></div>
  <div class="card"><div class="row" style="justify-content:space-between"><h3>Exercises</h3><button class="btn sm" data-act="exNew">+ Add</button></div>
@@ -460,6 +472,8 @@ document.addEventListener('click',ev=>{const b=ev.target.closest('button,[data-p
  const a=d.act;if(!a)return;
  if(a==='bodyOpen'){V.bodyOpen=true;const y=window.scrollY;render();window.scrollTo(0,y);return}
  if(a==='bodyClear'){V.bodyOpen=false;S.body={};save();const y=window.scrollY;render();window.scrollTo(0,y);return}
+ if(a==='install'){if(installEvt){const ev=installEvt;installEvt=null;ev.prompt();(ev.userChoice||Promise.resolve()).finally(()=>render())}return}
+ if(a==='instHide'){try{localStorage.setItem('willow-install-hide','1')}catch(e){}render();return}
  if(a==='useSug'){V.sel=suggest(V.tier).map(s=>s.id);return render()}
  if(a==='startLift'){if(W&&W.type==='str'){W.items=V.sel.map(id=>mergeItem(W.items.find(i=>i.id===id),id,V.tier));W.tier=V.tier}
   else W={type:'str',tier:V.tier,items:V.sel.map(id=>buildItem(id,V.tier))};saveW();V.view='lift';return render()}

@@ -1,11 +1,11 @@
 // Bump VERSION in build.py on every release. The browser byte-compares this file to
 // decide whether a new service worker exists, so the changed cache name is what
 // tells installed copies to update.
-const CACHE_NAME = 'willow-v5';
+const CACHE_NAME = 'willow-v6';
 const ASSETS = [
   './',
   './index.html',
-  './app.js?v=5',
+  './app.js?v=6',
   './manifest.json',
   './icons/icon-32.png',
   './icons/icon-180.png',
